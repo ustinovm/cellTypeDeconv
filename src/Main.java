@@ -116,6 +116,7 @@ public class Main {
                 }
             } else {
                 numOfSupposedCorrect++;
+                //TODO: create a FASTA for each cell type
             }
 
         }
