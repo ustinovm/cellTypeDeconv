@@ -5,6 +5,8 @@ import org.apache.commons.cli.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -13,7 +15,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         Options options = new Options();
 
-        Option bam = new Option("bam", "bam", true, "filepath to bam file");
+        Option bam = new Option("bam", "bam", true, "filepath to bam file. required ending: .bam.1");
         bam.setRequired(true);
         options.addOption(bam);
 
@@ -51,6 +53,8 @@ public class Main {
 
         String experimentID = bamstr.substring(lastSlashIndex + 1, bamstr.length() - 6);
 
+        LocalDateTime startTime = LocalDateTime.now();
+
 
         ArrayList<String> barcodeList = barcodeRead(barcodefilepath);
         HashMap<String, Integer> discardedBarcodes = new HashMap<>();
@@ -82,7 +86,7 @@ public class Main {
                 if (!barcode.equals(other)) {
                     barcodeMismatch++;
                     if (other.length() != 16) {
-                        System.out.println("validatedBC: " + barcode + " | researcherBC: " + other);
+                        //System.out.println("validatedBC: " + barcode + " | researcherBC: " + other);
                         continue;
                     }
                 }
@@ -97,12 +101,9 @@ public class Main {
             } else {
                 if (annotation.get(barcode) != null) {
                     //DropletAnnotation disone = annotation.get(barcode); //debugging
-                    if(barcode.equals("CGTCACTGTTCGTTGA")){
-                        System.out.println("wat");
-                    }
                     String name = annotation.get(barcode).cell_ontology_class;
-                    if(name.equals("")){
-                        name= "unknown";
+                    if (name.equals("")) {
+                        name = "unknown";
                     }
                     /*if(attributes.get(4).value.toString().contains("Missing")){ //seems like this is ok?
                         continue;
@@ -115,13 +116,31 @@ public class Main {
                     filenames.add(name);
                 }
 
-                //TODO: create a FASTA for each cell type
             }
 
         }
-        System.out.println("total number of reads: " + numOfReads);
-        System.out.println("number of supposedly correctly identifiable reads: " + numOfSupposedCorrect);
-        System.out.println("number of discarded barcodes: " + numOfDiscardedBarcodes);
+        LocalDateTime endtime = LocalDateTime.now();
+        Duration duration = Duration.between(startTime, endtime);
+
+        File report = new File(outfilepath + File.separator + "report.txt");
+        try {
+            FileWriter fw = new FileWriter(report);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write("the run took " + duration.toMinutes() + " \n");
+            bw.write("total number of reads: " + numOfReads + "\n");
+            bw.write("number of supposedly correctly identifiable reads: " + numOfSupposedCorrect + "\n");
+            bw.write("number of discarded barcodes: " + numOfDiscardedBarcodes + "\n");
+            bw.write("barcode mismatches: " + barcodeMismatch);
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        System.out.println("the run took " + duration.toMinutes() + " \n");
+        System.out.println("total number of reads: " + numOfReads + "\n");
+        System.out.println("number of supposedly correctly identifiable reads: " + numOfSupposedCorrect + "\n");
+        System.out.println("number of discarded barcodes: " + numOfDiscardedBarcodes + "\n");
         System.out.println("barcode mismatches: " + barcodeMismatch);
 
     }
@@ -160,9 +179,6 @@ public class Main {
     }
 
     public static void writeFile(String outpath, String fileName, String read, DropletAnnotation annot) throws IOException {
-        if(fileName.equals("10X_P7_8__.fasta")){
-            System.out.println("wat");
-        }
         File directory = new File(outpath);
         if (!directory.exists()) {
             Files.createDirectory(Paths.get(outpath));
