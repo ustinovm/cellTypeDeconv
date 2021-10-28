@@ -193,6 +193,7 @@ public class Main {
             bw.write(header + "\n");
             bw.write(read + "\n");
             bw.close();
+            fw.close();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
