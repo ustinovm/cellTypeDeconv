@@ -109,6 +109,10 @@ public class Main {
                         continue;
                     }*/
                     numOfSupposedCorrect++;
+                    if(numOfSupposedCorrect%1000000 ==0){
+                        System.out.println("the " + numOfSupposedCorrect +" th read will be written to a fasta now.");
+                        System.out.println(Duration.between(startTime,LocalDateTime.now()));
+                    }
                     name = name.replace(" ", "_");
                     name = experimentID + "_" + name;
                     name = name + "_" + annotation.get(barcode).cell_ontology_ID.replace(":", "_") + ".fasta";
