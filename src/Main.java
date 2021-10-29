@@ -61,7 +61,7 @@ public class Main {
 
         Set<String> filenames = new HashSet<>();
 
-        HashMap<String, DropletAnnotation> annotation = annotationRead(annotationfilepath, experimentID, barcodeList);
+        TreeMap<String, DropletAnnotation> annotation = annotationRead(annotationfilepath, experimentID, barcodeList);
 
 
         long barcodeMismatch = 0;
@@ -93,7 +93,7 @@ public class Main {
             }
             if (!barcodeList.contains(barcodeCB)) {
                 if (discardedBarcodes.containsKey(barcodeCB)) {
-                    discardedBarcodes.put(barcodeCB, discardedBarcodes.get(barcodeCB) + 1);
+                    //discardedBarcodes.put(barcodeCB, discardedBarcodes.get(barcodeCB) + 1);
                     numOfDiscardedBarcodes++;
                 } else {
                     discardedBarcodes.put(barcodeCB, 0);
@@ -113,11 +113,19 @@ public class Main {
                         System.out.println("the " + numOfSupposedCorrect +" th read will be written to a fasta now.");
                         System.out.println(Duration.between(startTime,LocalDateTime.now()));
                     }
+                    StringBuilder namebuff = new StringBuilder();
                     name = name.replace(" ", "_");
-                    name = experimentID + "_" + name;
-                    name = name + "_" + annotation.get(barcode).cell_ontology_ID.replace(":", "_") + ".fasta";
-                    writeFile(outfilepath, name, read, annotation.get(barcode));
-                    filenames.add(name);
+                    namebuff.append(experimentID);
+                    namebuff.append("_");
+                    namebuff.append(name);
+                    namebuff.append("_");
+                    namebuff.append(annotation.get(barcode).cell_ontology_ID.replace(":", "_"));
+                    namebuff.append(".fasta");
+                    String filename = namebuff.toString();
+                    //name = experimentID + "_" + name;
+                    //name = name + "_" + annotation.get(barcode).cell_ontology_ID.replace(":", "_") + ".fasta";
+                    writeFile(outfilepath, filename, read, annotation.get(barcode));
+                    //filenames.add(name);
                 }
 
             }
@@ -157,11 +165,12 @@ public class Main {
                 barcodeList.add(line);
             }
         }
+        Collections.sort(barcodeList);
         return barcodeList;
     }
 
-    public static HashMap<String, DropletAnnotation> annotationRead(String annotationfilepath, String experimentID, ArrayList<String> barcodeList) throws IOException {
-        HashMap<String, DropletAnnotation> annotation = new HashMap<>();
+    public static TreeMap<String, DropletAnnotation> annotationRead(String annotationfilepath, String experimentID, ArrayList<String> barcodeList) throws IOException {
+        TreeMap<String, DropletAnnotation> annotation = new TreeMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(annotationfilepath))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -179,6 +188,7 @@ public class Main {
                 }
             }
         }
+        //Collections.sort(annotation);
         return annotation;
     }
 
@@ -193,8 +203,17 @@ public class Main {
         try {
             FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
             BufferedWriter bw = new BufferedWriter(fw);
-            String header = ">" + annot.channel + "_" + annot.barcode + "|" + annot.cell_ontology_class + "|" + annot.cell_ontology_ID;
-            bw.write(header + "\n");
+            StringBuilder headerbuff = new StringBuilder();
+            headerbuff.append(">");
+            headerbuff.append(annot.channel);
+            headerbuff.append("_");
+            headerbuff.append(annot.barcode);
+            headerbuff.append("|");
+            headerbuff.append(annot.cell_ontology_class);
+            headerbuff.append("|");
+            headerbuff.append(annot.cell_ontology_ID);
+            //String header = ">" + annot.channel + "_" + annot.barcode + "|" + annot.cell_ontology_class + "|" + annot.cell_ontology_ID;
+            bw.write(headerbuff.append("\n").toString());
             bw.write(read + "\n");
             bw.close();
             fw.close();
