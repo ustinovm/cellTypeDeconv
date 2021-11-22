@@ -80,13 +80,15 @@ public class Main {
             }
             System.out.println("Number of total Cells: " + cellList.size() + "\nThis took: " + Duration.between(startTime, LocalDateTime.now()));
 
-            FileWriter fw = new FileWriter(kmerstr.substring(0, kmerstr.length() - 3) + "_kmerpercentage.tsv");
+            FileWriter fw = new FileWriter(kmerstr.substring(0, kmerstr.length() - 3) + "_kmerAbove80.tsv");
             DecimalFormat df = new DecimalFormat("#.##");
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write("#total number of cells:\t" + cellList.size() + "\n");
             for (KMer kmer : kmerList) {
                 double d = (double) kmer.foundInCells.size() / cellList.size();
-                bw.write(kmer.kmerString + "\t" + kmer.occurence + "\t" + df.format(d) + "\n");
+                if (d >= 0.8) {
+                    bw.write(kmer.kmerString + "\t" + kmer.occurence + "\t" + df.format(d) + "\n");
+                }
             }
 
         } catch (IOException e) {
