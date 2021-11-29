@@ -1,4 +1,3 @@
-
 import htsjdk.samtools.*;
 import org.apache.commons.cli.*;
 
@@ -73,6 +72,9 @@ public class Main {
         while (it.hasNext()) {
             SAMRecord sr = it.next();
             numOfReads++;
+            if (numOfReads % 1000000 == 0) {
+                System.out.println(numOfReads + " reads have been read from the bam file after " + Duration.between(startTime, LocalDateTime.now()));
+            }
             List<SAMRecord.SAMTagAndValue> attributes = sr.getAttributes();
             if (attributes.size() == 13) {
                 continue;
@@ -104,27 +106,38 @@ public class Main {
                     String name = annotation.get(barcode).cell_ontology_class;
                     if (name.equals("")) {
                         name = "unknown";
+                        continue;
                     }
                     /*if(attributes.get(4).value.toString().contains("Missing")){ //seems like this is ok?
                         continue;
                     }*/
-                    numOfSupposedCorrect++;
-                    if(numOfSupposedCorrect%1000000 ==0){
-                        System.out.println("the " + numOfSupposedCorrect +" th read will be written to a fasta now.");
-                        System.out.println(Duration.between(startTime,LocalDateTime.now()));
+                    String cellType = annotation.get(barcode).cell_ontology_ID;
+                    if (cellType.equals("CL:0000883")
+                            || cellType.equals("CL:0000236")
+                            || cellType.equals("CL:0000623")
+                            || cellType.equals("CL:0000738")
+                            || cellType.equals("CL:0000875")
+                            || cellType.equals("CL:0000084")
+                            || cellType.equals("CL:0000860")
+                            || cellType.equals("CL:0000235")) {
+                        StringBuilder namebuff = new StringBuilder();
+                        name = name.replace(" ", "_");
+                        namebuff.append(experimentID);
+                        namebuff.append("_");
+                        namebuff.append(barcode);
+                        namebuff.append("_");
+                        namebuff.append(annotation.get(barcode).cell_ontology_class.replace(" ", "_"));
+                        namebuff.append(".fasta");
+                        String filename = namebuff.toString();
+                        //name = experimentID + "_" + name;
+                        //name = name + "_" + annotation.get(barcode).cell_ontology_ID.replace(":", "_") + ".fasta";
+                        writeFile(outfilepath, filename, read, annotation.get(barcode));
+                        numOfSupposedCorrect++;
+                        if (numOfSupposedCorrect % 1000000 == 0) {
+                            System.out.println("the " + numOfSupposedCorrect + " th read has been written to a fasta now.");
+                            System.out.println(Duration.between(startTime, LocalDateTime.now()));
+                        }
                     }
-                    StringBuilder namebuff = new StringBuilder();
-                    name = name.replace(" ", "_");
-                    namebuff.append(experimentID);
-                    namebuff.append("_");
-                    namebuff.append(name);
-                    namebuff.append("_");
-                    namebuff.append(annotation.get(barcode).cell_ontology_ID.replace(":", "_"));
-                    namebuff.append(".fasta");
-                    String filename = namebuff.toString();
-                    //name = experimentID + "_" + name;
-                    //name = name + "_" + annotation.get(barcode).cell_ontology_ID.replace(":", "_") + ".fasta";
-                    writeFile(outfilepath, filename, read, annotation.get(barcode));
                     //filenames.add(name);
                 }
 
