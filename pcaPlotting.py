@@ -7,19 +7,45 @@ import seaborn as sns
 
 matrix_path = sys.argv[1]
 
-mat = pd.read_csv(matrix_path, sep="\t")
-mat = mat.iloc[:, 1:]  # delete first column bc it was just numbers
+mat = pd.read_csv(matrix_path, sep="\t", index_col="0") #indexcol evtl entfenen für single matrices...
+#mat = mat.iloc[:, 1:]  # delete first column bc it was just numbers
 mat = mat.swapaxes(1, 0, False)
-mat = mat.set_axis(mat.iloc[0], axis=1, inplace=False)
-mat = mat.iloc[1:, :]
+#mat = mat.set_axis(mat.iloc[0], axis=1, inplace=False)
+#mat = mat.iloc[1:, :]
 
-for column in mat:
-    if "AAAAAAAAAAAAA" in column:
-        del mat[column]
+mat = mat.rename(index=lambda x: " ".join(x.split("_")[4:-1]))
+
+
+mat = mat.drop(index="leukocyte")
+mat = mat.drop(index="promonocyte")
+mat = mat.drop(index="granulocyte")
+mat = mat.drop(index="proerythroblast")
+mat = mat.drop(index="Fraction A pre-pro B cell")
+mat = mat.drop(index="hematopoietic precursor cell")
+mat = mat.drop(index="erythroblast")
+mat = mat.drop(index="late pro-B cell")
+mat = mat.drop(index="basophil")
+mat = mat.drop(index="alveolar macrophage")
+mat = mat.drop(index="early pro-B cell")
+mat = mat.drop(index="lung endothelial cell")
+mat = mat.drop(index="type II pneumocyte")
+mat = mat.drop(index="mast cell")
+mat = mat.drop(index="stromal cell")
+mat = mat.drop(index="myeloid cell")
+mat = mat.drop(index="granulocytopoietic cell")
+mat = mat.drop(index="ciliated columnar cell of tracheobronchial tree")
+
+
+
+#for column in mat:
+#    if "AAAAAAAAAAAAA" in column:
+#        del mat[column]
+
+mat = mat[mat.columns.drop(list(mat.filter(regex='AAAAAAAAAAAAA')))]
 
 labels = mat.index.to_series()
-labelslist = labels.str.split("_").str[4:-1].str.join(" ")
-labelslist = labelslist.tolist()
+#labelslist = labels.str.split("_").str[4:-1].str.join(" ")
+labelslist = labels.tolist()
 rndperm = np.random.permutation(mat.shape[0])
 
 pca = PCA(n_components=4)
@@ -33,7 +59,7 @@ print('Explained variation per principal component: {}'.format(pca.explained_var
 
 plt.figure(figsize=(16, 10))
 sns.scatterplot(
-    x="pca-two", y="pca-three",
+    x="pca-three", y="pca-four",
     palette=sns.color_palette("hls", len(set(labelslist))),
     data=mat,
     legend="full",
