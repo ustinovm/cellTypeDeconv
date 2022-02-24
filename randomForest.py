@@ -77,12 +77,19 @@ print(conf_mat)
 
 import seaborn
 
-fig, ax = plt.subplots(figsize=(16,10))
+fig, ax = plt.subplots(figsize=(18,10))
+ax.tick_params(labelsize=15)
 sett = list(set(labelslist))
+seaborn.set_context("poster")
 
 seaborn.heatmap(cm
                 # / np.sum(conf_mat)
-                , fmt='.1%', ax=ax, annot=True, xticklabels=labelset, yticklabels=labelset, cmap="Blues"
+                , fmt='.1%', ax=ax, annot=True, xticklabels=labelset, yticklabels=labelset, cmap="Blues",annot_kws={"size": 20}
                 )
-plt.savefig("10X_P7_8_labeled_confmat.png")
+plt.xlabel('Predicted Label', fontsize=18)
+plt.ylabel('True Label', fontsize=18)
+plt.tight_layout()
+
+plt.savefig("10X_P7_8_labeled_confmat_test.png")
 plt.show()
+
