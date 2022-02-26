@@ -5,6 +5,7 @@ from IPython.display import display
 from functools import reduce
 
 input_path = sys.argv[1]
+outname = sys.argv[2]
 
 if not os.path.isdir(input_path):
     print('The path specified does not exist')
@@ -12,7 +13,7 @@ if not os.path.isdir(input_path):
 
 df_files = []
 for file in os.listdir(input_path):
-    filename = input_path + "\\" + file
+    filename = input_path + os.sep + file
     df = pd.read_csv(filename, header=None, index_col=0, sep='\t')
     #df = df.set_index('0')  # set index
     #df.set_index(list(df.rows[0]))
@@ -21,4 +22,4 @@ for file in os.listdir(input_path):
     df_files.append(df)
 df_combine = pd.concat(df_files, axis=1).fillna(0)
 #df_combine.sort_values(by=df_combine.columns[0])
-df_combine.to_csv("testoutfile.tsv", sep="\t")
+df_combine.to_csv(outname+".tsv", sep="\t")
