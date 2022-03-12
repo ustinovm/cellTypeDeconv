@@ -10,13 +10,13 @@ from sklearn import tree
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 
 from collections import Counter
 
 matrix_path = sys.argv[1]
 
-mat = pd.read_csv(matrix_path, sep="\t")#, index_col="0")  # indexcol evtl entfenen für single matrices...
+mat = pd.read_csv(matrix_path, sep="\t")  # , index_col="0")  # indexcol evtl entfenen für single matrices...
 mat = mat.iloc[:, 1:]  # delete first column bc it was just numbers
 mat = mat.swapaxes(1, 0, False)
 mat = mat.set_axis(mat.iloc[0], axis=1, inplace=False)
@@ -26,21 +26,41 @@ mat = mat.iloc[1:, :]
 #    if "AAAAAAAAAAAAA" in column:
 #        del mat[column]
 
-mat = mat[mat.columns.drop(list(mat.filter(regex='AAAAAAAAAAAAA')))]
+mat = mat[mat.columns.drop(list(mat.filter(regex='AAAAAAAAAAAA')))]
 
 labels = mat.index.to_series()
-labelslist = labels.str.split("_").str[4:-1].str.join(" ")
+labelslist = labels.str.split("_").str[1:-2].str.join(" ")
 labelslist = labelslist.tolist()
 labelset = sorted(list(set(labelslist)))
-labelset.remove("leukocyte")
-mat = mat.rename(index=lambda x: " ".join(x.split("_")[4:-1]))
+# labelset.remove("leukocyte")
+mat = mat.rename(index=lambda x: " ".join(x.split("_")[1:-2]))
 coun = OrderedDict(sorted(Counter(mat.index.values).items()))
+print(coun)
 
+for key, val in coun.items():
+    if val < 100:
+        mat = mat.drop(index=key)
+        labelset.remove(key)
+"""
+mat = mat.drop(index="pre-natural killer cell")
+mat = mat.drop(index="immature T cell")
+mat = mat.drop(index="immature NK T cell")
+mat = mat.drop(index="mature natural killer cell")
+mat = mat.drop(index="granulocyte monocyte progenitor cell")
+mat = mat.drop(index="basophil")
+mat = mat.drop(index="B cell")
+mat = mat.drop(index='megakaryocyte-erythroid progenitor cell')
+labelset.remove("B cell")
+labelset.remove("basophil")
+labelset.remove("mature natural killer cell")
+labelset.remove("immature T cell")
+labelset.remove("immature NK T cell")
+labelset.remove("pre-natural killer cell")
+labelset.remove("granulocyte monocyte progenitor cell")
+labelset.remove('megakaryocyte-erythroid progenitor cell')
 
-mat = mat.drop(index="leukocyte")
-
-
-mat = mat.sort_index()
+"""
+mat = mat.sort_index()  # .astype(np.uint8)
 matt = mat.groupby(by=mat.index, axis=0).groups
 
 # i = 0
@@ -50,7 +70,7 @@ matt = mat.groupby(by=mat.index, axis=0).groups
 #    else:
 #        mat = mat.iloc[val - 50:val, :]
 #        i= i + val - 50
-rus = RandomOverSampler(random_state=432)
+rus = RandomUnderSampler(random_state=432)
 X_res, y_res = rus.fit_resample(mat, mat.index)
 X_train, X_test, y_train, y_test = train_test_split(mat[mat.columns], mat.index, test_size=0.5, stratify=mat.index,
                                                     random_state=123456)
@@ -68,7 +88,8 @@ print(f'Mean accuracy score: {accuracy:.3}')
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 # print(Counter(X_test.index.values))
-conf_mat = confusion_matrix(y_test, predicted, labels=labelset, normalize='true')
+#conf_mat = confusion_matrix(y_test, predicted, labels=labelset, normalize='true')
+conf_mat = confusion_matrix(y_test, predicted, labels=labelset)
 cm = pd.DataFrame(conf_mat, index=labelset, columns=labelset)
 # cm = cm * 100
 cm.index.name = 'True Label'
@@ -77,19 +98,23 @@ print(conf_mat)
 
 import seaborn
 
-fig, ax = plt.subplots(figsize=(18,10))
+fig, ax = plt.subplots(figsize=(18, 10))
 ax.tick_params(labelsize=15)
 sett = list(set(labelslist))
-seaborn.set_context("poster")
+# seaborn.set_context("poster")
 
 seaborn.heatmap(cm
                 # / np.sum(conf_mat)
-                , fmt='.1%', ax=ax, annot=True, xticklabels=labelset, yticklabels=labelset, cmap="Blues",annot_kws={"size": 20}
+                , fmt='.0f',
+                ax=ax,
+                annot=True,
+                xticklabels=labelset, yticklabels=labelset, cmap="Blues",
+                annot_kws={"size": 20}
                 )
 plt.xlabel('Predicted Label', fontsize=18)
 plt.ylabel('True Label', fontsize=18)
-plt.tight_layout()
+# plt.tight_layout()
 
-plt.savefig("10X_P7_8_labeled_confmat_test.png")
+plt.savefig(matrix_path[0:-4] + "_confmat_abs.png")
 plt.show()
 
