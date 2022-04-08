@@ -17,16 +17,16 @@ from collections import Counter
 matrix_path = sys.argv[1]
 
 mat = pd.read_csv(matrix_path, sep="\t")  # , index_col="0")  # indexcol evtl entfenen für single matrices...
-mat = mat.iloc[:, 1:]  # delete first column bc it was just numbers
+#mat = mat.iloc[:, 1:]  # delete first column bc it was just numbers
 mat = mat.swapaxes(1, 0, False)
 mat = mat.set_axis(mat.iloc[0], axis=1, inplace=False)
-mat = mat.iloc[1:, :]
-
+#mat = mat.iloc[1:, :]
+#mat = mat.rename(columns = lambda x: x.strip("smartseq_"))
 # for column in mat:
 #    if "AAAAAAAAAAAAA" in column:
 #        del mat[column]
 
-mat = mat[mat.columns.drop(list(mat.filter(regex='AAAAAAAAAAAA')))]
+#mat = mat[mat.columns.drop(list(mat.filter(regex='AAAAAAAAAAAA')))]
 
 labels = mat.index.to_series()
 labelslist = labels.str.split("_").str[1:-2].str.join(" ")
@@ -85,10 +85,26 @@ accuracy = accuracy_score(y_test, predicted)
 print(f'Out-of-bag score estimate: {rf.oob_score_:.3}')
 print(f'Mean accuracy score: {accuracy:.3}')
 
+'''
+Feature importance:
+'''
+importance = rf.feature_importances_.argsort()
+feat_importances = pd.Series(rf.feature_importances_, index=mat.columns)
+# summarize feature importance
+#for i, v in enumerate(importance):
+#    print('Feature: %0d, Score: %.5f' % (i, v))
+plt = feat_importances.nlargest(15).plot(kind='barh')
+#figure.savefig(matrix_path[0:-4] + "_features.png", bbox_inches="tight")
+# plot feature importance
+plt.savefig(matrix_path[0:-4] + "_features.png", bbox_inches="tight")
+#plt.close()
+'''/feature'''
+
+
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 # print(Counter(X_test.index.values))
-#conf_mat = confusion_matrix(y_test, predicted, labels=labelset, normalize='true')
+# conf_mat = confusion_matrix(y_test, predicted, labels=labelset, normalize='true')
 conf_mat = confusion_matrix(y_test, predicted, labels=labelset)
 cm = pd.DataFrame(conf_mat, index=labelset, columns=labelset)
 # cm = cm * 100
@@ -115,6 +131,5 @@ plt.xlabel('Predicted Label', fontsize=18)
 plt.ylabel('True Label', fontsize=18)
 # plt.tight_layout()
 
-plt.savefig(matrix_path[0:-4] + "_confmat_abs.png")
+plt.savefig(matrix_path[0:-4] + "_confmat_abs_tight.png", bbox_inches="tight")
 plt.show()
-
